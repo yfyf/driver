@@ -7,11 +7,14 @@ const net = require('net')
 const bonjour = require('bonjour')()
 const EventEmitter = require('events')
 
+
+const simulator = require('./simulator')
 const control = require('./control')
 
 var recFile = argv['_'].pop() || 'rec/senso/zero.dat'
 let speedFactor = 1/(parseFloat(argv['speed']) || 1)
 let loop = !argv['once']
+let useSimulator = argv['simulator']
 let timeoutOverride = null;
 
 function interpretCommand(cmd) {
@@ -65,6 +68,34 @@ function listenForConnection (host, port) {
   })
 }
 
+function SimulatingReplayer () {
+  var emitter = new EventEmitter()
+
+  // copied from rec/senso/zero.dat
+  const MAGIC_HEADER = "AAAAAAAAAAAtAIAAwQwIAOn/JgDr/+3/FwAXABYAHQD9/+z/8f/n//f/IwBPAJj/GgBFAJcAuv8AAAAAAAAAAC0AgADVDAgA3/8fAOz/6/8dACQAFQAmAPz/6//l/+//7/8mAEwAnP8eAEYAkwDH/wAAAAAAAAAALQCAAOkMCADf/xkA5//p/ycALQAcAB4A+//p/+r/8f/1/yIAUwCj/xgAOQCZALz/AAAAAAAAAAAtAIAA/QwIAOH/GwDn/+v/IQAgABwALAAGAPn/6P/f/wIAHQBMAKX/GQA7AI8AtP8AAAAAAAAAAC0AgAARDQgA6f8kAPH/9P8dACwAIgAgAAcA+//k//j/CgAsAGQAtP8ZAEAAlADF/w=="
+
+  var t = 0;
+  var timeout = 20 * speedFactor
+  if (timeoutOverride) {
+      timeout = timeoutOverride
+  }
+
+  function emitMsg() {
+      if (t === 0) {
+        var buf = Buffer.from(MAGIC_HEADER, 'base64')
+      } else {
+        var buf = simulator.genData(t);
+      }
+
+      emitter.emit('data', buf)
+      t = t + timeout
+
+      setTimeout(emitMsg, timeout)
+  }
+  emitMsg()
+  return emitter
+}
+
 // Create a never ending stream of data
 function Replayer (recFile) {
   var emitter = new EventEmitter()
@@ -87,7 +118,6 @@ function Replayer (recFile) {
       }
       if (timeoutOverride) {
           timeout = timeoutOverride;
-      }
       }
       var buf = Buffer.from(msg, 'base64')
       emitter.emit('data', buf)
@@ -123,7 +153,14 @@ const profile = {
   }
 }
 
-const dataStream = Replayer(recFile)
+var dataStream
+if (useSimulator) {
+    console.log("==== Using simulator")
+    dataStream = SimulatingReplayer()
+} else {
+    console.log(`==== Replaying ${recFile}`)
+    dataStream = Replayer(recFile)
+}
 
 // Advertise Senso via mDNS
 bonjour.publish({
