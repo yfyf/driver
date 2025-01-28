@@ -9,6 +9,7 @@ const VERSION_FIX = 0
 // DATA_TYPES
 const DATA_TYPE_GET_DEV_INFO = 0xD1
 const DATA_TYPE_GET_VCC_INFO = 0xD2
+const DATA_TYPE_SET_SPEED = 0xE5
 
 module.exports = function (profile, data) {
   console.log(data)
@@ -16,13 +17,18 @@ module.exports = function (profile, data) {
   const type = body.readUInt16LE(2)
   switch (type) {
     case DATA_TYPE_GET_DEV_INFO:
-      return devInfo(profile)
+      return {resp: devInfo(profile)}
 
     case DATA_TYPE_GET_VCC_INFO:
-      return vccInfo()
+      return {resp: vccInfo()}
+
+    case DATA_TYPE_SET_SPEED:
+      const speedHz = body.slice(2+2).readUInt8();
+      console.log("Setting speed to:", speedHz);
+      return {cmd: {setSpeed: speedHz}, resp: standardResponse(type)};
 
     default:
-      return standardResponse(type)
+      return {resp: standardResponse(type)}
   }
 }
 

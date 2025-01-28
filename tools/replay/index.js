@@ -12,6 +12,13 @@ const control = require('./control')
 var recFile = argv['_'].pop() || 'rec/senso/zero.dat'
 let speedFactor = 1/(parseFloat(argv['speed']) || 1)
 let loop = !argv['once']
+let timeoutOverride = null;
+
+function interpretCommand(cmd) {
+    if (cmd && ('setSpeed' in cmd)) {
+        timeoutOverride = 1000.0 / cmd['setSpeed']
+    }
+}
 
 async function mockSenso (profile, data) {
   var socket = await listenForConnection('0.0.0.0', 55567)
@@ -23,8 +30,10 @@ async function mockSenso (profile, data) {
 
   data.on('data', send)
   socket.on('data', (incoming) => {
-    // Mock a suitable response
-    socket.write(control(profile, incoming))
+    const {cmd: cmd = null, resp: resp } = control(profile, incoming);
+
+    interpretCommand(cmd);
+    socket.write(resp);
   })
 
   socket.on('close', () => {
@@ -71,17 +80,21 @@ function Replayer (recFile) {
       var timeout
       if (items.length === 2) {
         msg = items[1]
-        timeout = items[0]
+        timeout = items[0] * speedFactor
       } else {
         msg = items[0]
-        timeout = 20
+        timeout = 20 * speedFactor
+      }
+      if (timeoutOverride) {
+          timeout = timeoutOverride;
+      }
       }
       var buf = Buffer.from(msg, 'base64')
       emitter.emit('data', buf)
 
       setTimeout(() => {
         stream.resume()
-      }, timeout * speedFactor)
+      }, timeout)
     }).on('end', () => {
       if (loop) {
         console.log('End of the record stream, looping.')
