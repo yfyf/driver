@@ -15,7 +15,7 @@ var recFile = argv['_'].pop() || 'rec/senso/zero.dat'
 let speedFactor = 1/(parseFloat(argv['speed']) || 1)
 let loop = !argv['once']
 let useSimulator = argv['simulator']
-let timeoutOverride = null;
+var timeoutOverride = null;
 
 function interpretCommand(cmd) {
     if (cmd && ('setSpeed' in cmd)) {
@@ -76,10 +76,6 @@ function SimulatingReplayer () {
 
   var t = 0;
   var timeout = 20 * speedFactor
-  if (timeoutOverride) {
-      timeout = timeoutOverride
-  }
-
   function emitMsg() {
       if (t === 0) {
         var buf = Buffer.from(MAGIC_HEADER, 'base64')
@@ -90,6 +86,9 @@ function SimulatingReplayer () {
       emitter.emit('data', buf)
       t = t + timeout
 
+      if (timeoutOverride) {
+          timeout = timeoutOverride
+      }
       setTimeout(emitMsg, timeout)
   }
   emitMsg()
