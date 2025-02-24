@@ -119,3 +119,12 @@ The Senso replayer will appear as a Senso network device, so both driver and rep
 #### Senso Flex replay
 
 The Senso Flex replayer (`npm run replay-flex`) supports the same parameters as the Senso replayer. It mocks the driver with respect to the `/flex` WebSocket resource, so the driver can not be running at the same time.
+
+#### Senso Flex data converter
+
+[tools/parse/flex-to-json.py](tools/parse/flex-to-json.py) can be used to convert Flex recordings from binary
+to JSON. E.g.
+
+    ./tools/parse/flex-to-json.py rec/flex/steps.dat
+
+See [tools/parse/flex-to-json.py](tools/parse/flex-to-json.py) for more details.
