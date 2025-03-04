@@ -14,7 +14,13 @@
 #            cols: [4, 17, 1],
 #            vals: [34, 200, 11]},
 #           ...
-#       ]
+#       ],
+#       # arbitrary metadata, such as FW settings, or context
+#       # attached with `--metadata k=v`
+#       metadata: {
+#           firmware_version: ...
+#           autozero_threshold: "10",
+#       }
 #   }
 #
 # where:
@@ -97,6 +103,22 @@ def parse_args():
         help="Flex .dat recording path (will assume stdin if not present)"
     )
 
+    def parse_metadata(inp_str):
+        if inp_str:
+            kvs = [tuple([v.strip() for v in kv.split('=')]) for kv in inp_str.split(",") if kv]
+
+            if any([len(t) != 2 for t in kvs]):
+                raise ValueError(f"Error: Invalid metadata key-vals: {inp_str}")
+
+            return {k: v for (k, v) in kvs}
+        else:
+            return None
+
+    parser.add_argument("--metadata",
+        type=parse_metadata,
+        help="comma-separated key-val pairs: key1=val1,key2=val2"
+    )
+
     return parser.parse_args()
 
 
@@ -104,6 +126,9 @@ def main():
     args = parse_args()
     with fileinput.input(args.input_file) as inp:
         out = parse_flex_recording(inp)
+        if args.metadata:
+            out['metadata'] = args.metadata
+
         print(json.dumps(out))
 
 
