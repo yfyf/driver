@@ -17,6 +17,7 @@ function Replayer (recFile) {
   function createStream () {
     var stream = new fs.createReadStream(recFile).pipe(split())
 
+    var timeout = 20
     stream.on('data', (data) => {
       stream.pause()
 
@@ -28,7 +29,6 @@ function Replayer (recFile) {
         timeout = items[0]
       } else {
         msg = items[0]
-        timeout = 20
       }
       var buf = Buffer.from(msg, 'base64')
       emitter.emit('data', buf)
@@ -36,10 +36,13 @@ function Replayer (recFile) {
       setTimeout(() => {
         stream.resume()
       }, timeout * speedFactor)
+
     }).on('end', () => {
       if (loop) {
         console.log('End of the record stream, looping.')
-        createStream()
+        setTimeout(() => {
+            createStream()
+        }, timeout * speedFactor)
       } else {
         console.log('End of the record stream, exiting.')
         process.exit(0)
