@@ -159,7 +159,7 @@ const (
 // intercept client-to-device commands and configure the parser
 // accordingly. As we don't need acquisition at other than 8 bits it
 // seems more robust to fix the mode in the driver right now.
-const BYTES_PER_SAMPLE = 3 // Row, column and sample value of 8 bit
+const BYTES_PER_SAMPLE = 3+1 // Row, column and sample value of 8 bit
 
 // Returns a modified buffer with potentially removed invalid samples that seem
 // to come from the firmware with each frame.
@@ -200,12 +200,12 @@ func connectSerial(ctx context.Context, logger *logrus.Entry, serialName string,
 		portCtxCancel()
 	}()
 
-	BITDEPTH_8_CMD := []byte{'U', 'L', '\n'}
-	_, err = port.Write(BITDEPTH_8_CMD)
-	if err != nil {
-		logger.WithField("error", err).Info("Failed to set bitdepth of 8.")
-		return
-	}
+	//BITDEPTH_8_CMD := []byte{'U', 'L', '\n'}
+	//_, err = port.Write(BITDEPTH_8_CMD)
+	//if err != nil {
+	//	logger.WithField("error", err).Info("Failed to set bitdepth of 8.")
+	//	return
+	//}
 
 	_, err = port.Write(START_MEASUREMENT_CMD)
 	if err != nil {
@@ -277,7 +277,7 @@ func connectSerial(ctx context.Context, logger *logrus.Entry, serialName string,
 				samplesLeftInSet = samplesLeftInSet - 1
 
 				if samplesLeftInSet <= 0 {
-					buff = maybeRemoveInvalidSamples(buff)
+					//buff = maybeRemoveInvalidSamples(buff)
 
 					// Finish and send set
 					if len(buff) > 0 {

@@ -45,7 +45,7 @@ import json
 def decode_frame(frame: bytes) -> List[Tuple[int, int, int]]:
     # Note: we DO NOT do `col -> dim - 1 - col` transformation
     # like in Play.
-    return list(struct.iter_unpack("BBB", frame)) # B = unsigned char
+    return list(struct.iter_unpack("BBH", frame)) # B = unsigned char
 
 
 def parse_body(body):
@@ -55,7 +55,7 @@ def parse_body(body):
     sample = {
         'rows': [row for (row, _, _) in sensels],
         'cols': [col for (_, col, _) in sensels],
-        'vals': [val for (_, _, val) in sensels]
+        'vals': [struct.unpack(">H", struct.pack("<H", val))[0] for (_, _, val) in sensels]
     }
     return sample
 
