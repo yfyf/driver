@@ -198,6 +198,15 @@ func connectSerial(ctx context.Context, logger *logrus.Entry, serialName string,
 	}
 	port.ResetInputBuffer() // flush any unread data buffered by the OS
 
+	// Set a read timeout for the serial port to avoid starving if the
+	// controller stops sending data for whatever reason.
+	//
+	// Note: since bufio.ReadByte (which wraps the port) internally will retry empty reads for
+	// at most maxConsecutiveEmptyReads, which is hardcoded to 100 (see
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.24.3:src/bufio/bufio.go;l=45)
+	// therefore the "real" read timeout is 10ms * 100 = 1s
+	port.SetReadTimeout(10 * time.Millisecond)
+
 	readerCtx, readerCtxCancel := context.WithCancel(ctx)
 
 	defer func() {
