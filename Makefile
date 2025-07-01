@@ -70,6 +70,22 @@ WINDOWS_BIN = bin/dividat-driver-windows-amd64.exe
 $(WINDOWS_BIN):
 	nix develop '.#crossBuild.x86_64-windows' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $(WINDOWS_BIN) -v $(VERSION)"
 
+
+MACOS_ARM_BIN = bin/dividat-driver-darwin-arm64
+MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
+
+.PHONY: macos_arm macos_x86 $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
+
+macos_arm: $(MACOS_ARM_BIN)
+
+macos_x86: $(MACOS_X86_BIN)
+
+$(MACOS_ARM_BIN):
+	nix develop '.#crossBuild.darwin.aarch64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
+
+$(MACOS_X86_BIN):
+	nix develop '.#crossBuild.darwin.x86_64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
+
 crossbuild: $(LINUX_BIN) $(WINDOWS_BIN)
 
 ### Release ###############################################
