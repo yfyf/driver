@@ -74,11 +74,9 @@ $(WINDOWS_BIN):
 MACOS_ARM_BIN = bin/dividat-driver-darwin-arm64
 MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
 
-.PHONY: macos_arm macos_x86 $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
+.PHONY: crossbuild_mac $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
 
-macos_arm: $(MACOS_ARM_BIN)
-
-macos_x86: $(MACOS_X86_BIN)
+crossbuild_mac: $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
 
 $(MACOS_ARM_BIN):
 	nix develop '.#crossBuild.darwin.aarch64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
