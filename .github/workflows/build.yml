@@ -59,6 +59,10 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
+      - run: find artifacts/ -type f
+
+      - run: ls -lh artifacts/
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,4 +71,4 @@ jobs:
             --verify-tag \
             --notes-from-tag \
             "$GITHUB_REF_NAME" \
-            $(find artifacts/* -type f)
+            $(find artifacts/ -type f)
