@@ -12,8 +12,6 @@ permissions:
 jobs:
   build-macos:
     runs-on: macos-latest
-    outputs:
-      artifacts-macos: ${{ steps.upload.outputs.artifact-name }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
@@ -31,8 +29,6 @@ jobs:
 
   build-others:
     runs-on: ubuntu-latest
-    outputs:
-      artifacts-others: ${{ steps.upload.outputs.artifact-name }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
@@ -53,13 +49,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifacts-others
+          pattern: binaries-*
           path: artifacts/
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: artifacts-macos
-          path: artifacts/
+          merge-multiple: true
 
       - name: Create Release
         env:
