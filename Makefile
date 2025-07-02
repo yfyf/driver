@@ -95,6 +95,12 @@ bin/DividatDriver-%.app: bin/dividat-driver-darwin-% macos/Info.plist macos/laun
 	chmod +x $@/Contents/MacOS/launcher
 	sudo codesign --deep --force --sign "-" $@
 
+$(MACOS_X86_APP_BUNDLE_ZIP): $(MACOS_X86_APP_BUNDLE)
+	zip -r -y $@ $<
+
+$(MACOS_ARM_APP_BUNDLE_ZIP): $(MACOS_ARM_APP_BUNDLE)
+	zip -r -y $@ $<
+
 bin/DividatDriver-%.app.zip: bin/DividatDriver-%.app
 	zip -r -y $@ $<
 
