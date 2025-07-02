@@ -72,17 +72,28 @@ $(WINDOWS_BIN):
 
 
 MACOS_ARM_BIN = bin/dividat-driver-darwin-arm64
+MACOS_ARM_APP_BUNDLE = bin/DividatDriver-arm64.app.zip
 MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
+MACOS_X86_APP_BUNDLE = bin/DividatDriver-amd64.app.zip
 
 .PHONY: crossbuild_mac $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
 
-crossbuild_mac: $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
+crossbuild_mac: $(MACOS_ARM_APP_BUNDLE) $(MACOS_X86_APP_BUNDLE)
 
 $(MACOS_ARM_BIN):
 	nix develop '.#crossBuild.darwin.aarch64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
 
 $(MACOS_X86_BIN):
 	nix develop '.#crossBuild.darwin.x86_64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
+
+bin/DividatDriver-%.app: bin/dividat-driver-darwin-% Info.plist
+	mkdir -p $@/Contents/MacOS
+	cp $< $@/Contents/MacOS/driver
+	chmod +x $@/Contents/MacOS/driver
+	cp Info.plist $@/Contents/Info.plist
+
+bin/DividatDriver-%.app.zip: | bin/DividatDriver-%.app
+	zip -r -y $@ $|
 
 crossbuild: $(LINUX_BIN) $(WINDOWS_BIN)
 
