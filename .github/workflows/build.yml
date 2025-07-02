@@ -71,4 +71,4 @@ jobs:
             --verify-tag \
             --notes-from-tag \
             "$GITHUB_REF_NAME" \
-            $(find artifacts/ -type f)
+            $(find artifacts/ -maxdepth 1 -type f)
