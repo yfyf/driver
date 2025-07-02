@@ -86,7 +86,7 @@ $(MACOS_ARM_BIN):
 $(MACOS_X86_BIN):
 	nix develop '.#crossBuild.darwin.x86_64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
 
-bin/DividatDriver-%.app: bin/dividat-driver-darwin-% Info.plist
+bin/DividatDriver-%.app: bin/dividat-driver-darwin-% macos/Info.plist macos/launcher
 	mkdir -p $@/Contents/MacOS
 	cp $< $@/Contents/MacOS/driver
 	chmod +x $@/Contents/MacOS/driver
