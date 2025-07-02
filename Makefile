@@ -90,7 +90,10 @@ bin/DividatDriver-%.app: bin/dividat-driver-darwin-% Info.plist
 	mkdir -p $@/Contents/MacOS
 	cp $< $@/Contents/MacOS/driver
 	chmod +x $@/Contents/MacOS/driver
-	cp Info.plist $@/Contents/Info.plist
+	cp macos/Info.plist $@/Contents/Info.plist
+	cp macos/launcher $@/Contents/MacOS/launcher
+	chmod +x $@/Contents/MacOS/lancher
+	sudo codesign --deep --force --sign "-" $@
 
 bin/DividatDriver-%.app.zip: | bin/DividatDriver-%.app
 	zip -r -y $@ $|

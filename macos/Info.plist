@@ -14,5 +14,7 @@ http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <string>1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>launcher</string>
 </dict>
 </plist>
