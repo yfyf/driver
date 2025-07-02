@@ -1,12 +1,19 @@
-name: "Build"
+name: Release Tag
 
 on:
-  pull_request:
   push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
 
 jobs:
-  macos:
+  build-macos:
     runs-on: macos-latest
+    outputs:
+      artifacts-macos: ${{ steps.upload.outputs.artifact-name }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
@@ -17,13 +24,15 @@ jobs:
       - run: nix develop --command make crossbuild_mac_bundles
       - name: 'Upload Artifacts'
         uses: actions/upload-artifact@v4
+        id: upload
         with:
           name: binaries-macos
           path: bin/*
-          retention-days: 5
 
-  linux-and-windows:
+  build-others:
     runs-on: ubuntu-latest
+    outputs:
+      artifacts-others: ${{ steps.upload.outputs.artifact-name }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
@@ -32,8 +41,32 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v11
       - run: nix develop --command make crossbuild
       - name: 'Upload Artifacts'
+        id: upload
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-linux-and-windows
+          name: binaries-others
           path: bin/*
-          retention-days: 5
+
+  release:
+    needs: [build-macos, build-others]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifacts-others
+          path: artifacts/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifacts-macos
+          path: artifacts/
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create \
+            --verify-tag \
+            --notes-from-tag \
+            "$GITHUB_REF_NAME" \
+            artifacts/*
