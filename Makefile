@@ -71,6 +71,8 @@ $(WINDOWS_BIN):
 	nix develop '.#crossBuild.x86_64-windows' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $(WINDOWS_BIN) -v $(VERSION)"
 
 
+.PHONY: crossbuild_mac $(MACOS_ARM_BIN) $(MACOS_X86_BIN) $(MACOS_ARM_APP_BUNDLE) $(MACOS_X86_APP_BUNDLE)
+
 MACOS_ARM_BIN = bin/dividat-driver-darwin-arm64
 MACOS_ARM_APP_BUNDLE = bin/DividatDriver-arm64.app.zip
 MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
@@ -82,19 +84,19 @@ $(MACOS_ARM_BIN):
 $(MACOS_X86_BIN):
 	nix develop '.#crossBuild.darwin.x86_64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
 
+.PHONY: bin/DividatDriver-%.app
 bin/DividatDriver-%.app: bin/dividat-driver-darwin-% macos/Info.plist macos/launcher
 	mkdir -p $@/Contents/MacOS
 	cp $< $@/Contents/MacOS/driver
 	chmod +x $@/Contents/MacOS/driver
 	cp macos/Info.plist $@/Contents/Info.plist
 	cp macos/launcher $@/Contents/MacOS/launcher
-	chmod +x $@/Contents/MacOS/lancher
+	chmod +x $@/Contents/MacOS/launcher
 	sudo codesign --deep --force --sign "-" $@
 
-bin/DividatDriver-%.app.zip: | bin/DividatDriver-%.app
-	zip -r -y $@ $|
+bin/DividatDriver-%.app.zip: bin/DividatDriver-%.app
+	zip -r -y $@ $<
 
-.PHONY: crossbuild_mac $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
 crossbuild_mac: $(MACOS_ARM_APP_BUNDLE) $(MACOS_X86_APP_BUNDLE)
 
 crossbuild: $(LINUX_BIN) $(WINDOWS_BIN)
