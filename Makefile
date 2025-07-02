@@ -70,21 +70,24 @@ WINDOWS_BIN = bin/dividat-driver-windows-amd64.exe
 $(WINDOWS_BIN):
 	nix develop '.#crossBuild.x86_64-windows' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $(WINDOWS_BIN) -v $(VERSION)"
 
+crossbuild: $(LINUX_BIN) $(WINDOWS_BIN)
 
-.PHONY: crossbuild_mac $(MACOS_ARM_BIN) $(MACOS_X86_BIN)
+### macOS cross-compilation and app bundle #############
 
 MACOS_ARM_BIN = bin/dividat-driver-darwin-arm64
-MACOS_ARM_APP_BUNDLE = bin/DividatDriver-arm64.app
-MACOS_ARM_APP_BUNDLE_ZIP = $(MACOS_ARM_APP_BUNDLE).zip
-MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
-MACOS_X86_APP_BUNDLE = bin/DividatDriver-amd64.app
-MACOS_X86_APP_BUNDLE_ZIP = $(MACOS_X86_APP_BUNDLE).zip
-
+.PHONY: $(MACOS_ARM_BIN)
 $(MACOS_ARM_BIN):
 	nix develop '.#crossBuild.darwin.aarch64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
 
+MACOS_X86_BIN = bin/dividat-driver-darwin-amd64
+.PHONY: $(MACOS_X86_BIN)
 $(MACOS_X86_BIN):
 	nix develop '.#crossBuild.darwin.x86_64' --command bash -c "VERBOSE=1 ./build.sh -i $(SRC) -o $@ -v $(VERSION)"
+
+MACOS_ARM_APP_BUNDLE = bin/DividatDriver-arm64.app
+MACOS_ARM_APP_BUNDLE_ZIP = $(MACOS_ARM_APP_BUNDLE).zip
+MACOS_X86_APP_BUNDLE = bin/DividatDriver-amd64.app
+MACOS_X86_APP_BUNDLE_ZIP = $(MACOS_X86_APP_BUNDLE).zip
 
 bin/DividatDriver-%.app: bin/dividat-driver-darwin-% macos/Info.plist macos/launcher
 	mkdir -p $@/Contents/MacOS
@@ -98,9 +101,11 @@ bin/DividatDriver-%.app: bin/dividat-driver-darwin-% macos/Info.plist macos/laun
 bin/DividatDriver-%.app.zip: bin/DividatDriver-%.app
 	zip -r -y $@ $<
 
-crossbuild_mac: $(MACOS_ARM_APP_BUNDLE_ZIP) $(MACOS_X86_APP_BUNDLE_ZIP)
+.PHONY: crossbuild_mac
+crossbuild_mac: $(MACOS_X86_BIN) $(MACOS_ARM_BIN)
 
-crossbuild: $(LINUX_BIN) $(WINDOWS_BIN)
+.PHONY: crossbuild_mac_bundles
+crossbuild_mac_bundles: $(MACOS_X86_APP_BUNDLE_ZIP) $(MACOS_ARM_APP_BUNDLE_ZIP)
 
 ### Release ###############################################
 
