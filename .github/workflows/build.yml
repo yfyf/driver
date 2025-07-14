@@ -15,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           fetch-tags: true
       - uses: cachix/install-nix-action@v31
         with:
@@ -35,7 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           fetch-tags: true
       - run: git describe --always HEAD
       - uses: cachix/install-nix-action@v31
@@ -57,7 +55,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           fetch-tags: true
 
       - uses: actions/download-artifact@v4
