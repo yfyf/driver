@@ -15,6 +15,8 @@ The functionality of this module is as follows:
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
@@ -156,6 +158,10 @@ func (backend *DeviceBackend) connectInternal(device websocket.UsbDeviceInfo) er
 	backend.Disconnect()
 
 	backend.log.WithField("path", device.Path).Info("Attempting to connect with device.")
+	jsval, _ := json.MarshalIndent(device, "", "  ")
+	fmt.Print("========== DEVICE METADATA ==========\n")
+	fmt.Print(string(jsval))
+	fmt.Print("\n=====================================")
 
 	ctx, cancel := context.WithCancel(backend.ctx)
 
