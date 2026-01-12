@@ -57,7 +57,7 @@ func (handle *DeviceEnumerator) ListMatchingDevices() []websocket.UsbDeviceInfo 
 		if isFlexLike(*port) {
 			device, err := portDetailsToDeviceInfo(*port)
 			if err != nil {
-				handle.log.WithField("port", port).Error("Failed to convert serial port details to device info!")
+				handle.log.WithField("port", port).WithField("err", err).Error("Failed to convert serial port details to device info!")
 			} else {
 				handle.log.WithField("name", port.Name).Debug("Serial port matches a Flex device.")
 				matching = append(matching, *device)
