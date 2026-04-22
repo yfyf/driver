@@ -4,6 +4,30 @@ let
   proxyPort = 8118;
   fakeDnsIp = "10.3.3.53";
 
+  shellPackages = [
+    go
+    gcc
+
+    # test dependencies
+    nodejs
+    socat
+
+    # Required for building go dependencies
+    autoconf
+    automake
+    libtool
+    flex
+    pkg-config
+  ]
+  ++ lib.optional stdenv.isLinux pcsclite
+  ++ lib.optional stdenv.isDarwin pkgs.darwin.apple_sdk.frameworks.PCSC;
+
+  # Closure of exactly the packages needed in the sandbox — avoids exposing
+  # the entire host nix store to the sandboxed process.
+  sandboxClosure = pkgs.closureInfo {
+    rootPaths = shellPackages ++ [ bashInteractive ];
+  };
+
   privoxyActions = writeText "whitelist.action" ''
     {+block{not in whitelist}}
     /
@@ -55,7 +79,6 @@ let
       --setenv DISABLE_ERROR_REPORTING 1
 
       # Filesystem mounts - order matters!
-      --ro-bind     /nix/store  /nix/store
       --bind        "$PWD"      "$PWD"      # the only writable path is the project directory
       --ro-bind-try "$PWD/.git" "$PWD/.git" # ...except for .git, which is read-only
       # hide sensitive files
@@ -88,6 +111,11 @@ let
       --die-with-parent
       --chdir "$PWD"
     )
+
+    # Mount only the closure of the dev shell's packages, not the full store
+    while IFS= read -r storePath; do
+      bwrap_args+=(--ro-bind "$storePath" "$storePath")
+    done < ${sandboxClosure}/store-paths
 
     echo "Entering sandbox..."
     exec ${bubblewrap}/bin/bwrap "''${bwrap_args[@]}" ${bashInteractive}/bin/bash
@@ -129,28 +157,7 @@ let
   '';
 in
 mkShell {
-  buildInputs = [
-    go
-    gcc
-
-    # test dependencies
-    nodejs
-    socat
-
-    # Required for building go dependencies
-    autoconf
-    automake
-    libtool
-    flex
-    pkg-config
-
-    privoxy
-    passt
-    iproute2
-  ]
-  ++ lib.optional stdenv.isLinux pcsclite
-  ++ lib.optional stdenv.isDarwin pkgs.darwin.apple_sdk.frameworks.PCSC;
-
+  buildInputs = shellPackages;
 
   shellHook = ''
     if [ -z "$IN_BWRAP" ]; then
