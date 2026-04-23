@@ -90,6 +90,9 @@ let
       # needed for dynamic linking to work
       --ro-bind-try /lib /lib
       --ro-bind-try /lib64 /lib64
+      --ro-bind-try /usr/bin/env /usr/bin/env
+
+      --ro-bind-try /etc/machine-id /etc/machine-id
 
       # DNS setup
       --ro-bind "$RESOLV" /etc/resolv.conf
