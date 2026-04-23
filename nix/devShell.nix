@@ -20,6 +20,8 @@ let
     libtool
     flex
     pkg-config
+    procps # pkill
+    iproute2 # ip
   ]
   ++ lib.optional stdenv.isLinux pcsclite
   ++ lib.optional stdenv.isDarwin pkgs.darwin.apple_sdk.frameworks.PCSC;
@@ -58,10 +60,10 @@ let
     # Block outgoing network traffic by dropping the default route
     # Note: the sandbox will still have an assigned IP, which will allows
     # to route traffic to/from the sandbox
-    ${iproute2}/bin/ip route del default 2>/dev/null || true
+    ip route del default 2>/dev/null || true
 
     # Setup DNS: allow traffic to the forwarded DNS IP
-    ${iproute2}/bin/ip route add ${fakeDnsIp} via $GW dev $DEV  2>/dev/null || true
+    ip route add ${fakeDnsIp} via $GW dev $DEV  2>/dev/null || true
     RESOLV=$(mktemp)
     echo "nameserver ${fakeDnsIp}" > "$RESOLV"
 
