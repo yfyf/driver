@@ -72,9 +72,7 @@ let
       # Env variables
       --clearenv
       --setenv IN_BWRAP 1
-      --setenv PATH "$PATH"
       --setenv HOME "$PWD"
-      --setenv TERM "$TERM"
       --setenv HTTP_PROXY  "http://127.0.0.1:${toString proxyPort}"
       --setenv HTTPS_PROXY "http://127.0.0.1:${toString proxyPort}"
 
@@ -117,7 +115,25 @@ let
       --chdir "$PWD"
     )
 
-    # Mount only the closure of the dev shell's packages, not the full store
+    # Environment variable names to pass through verbatim (regex patterns,
+    # matched against the variable name only). Use ^FOO$ for exact matches
+    # to avoid accidentally matching prefixes like PATH_FOO when you want PATH.
+    passthru_env_regexes=(
+      '^PATH$'
+      '^TERM$'
+      '^NIX.*'
+      '^PKG_CONFIG_PATH_FOR_TARGET$'
+    )
+    while IFS='=' read -r name value; do
+      for re in "''${passthru_env_regexes[@]}"; do
+        if [[ $name =~ $re ]]; then
+          bwrap_args+=(--setenv "$name" "$value")
+          break
+        fi
+      done
+    done < <(env)
+
+    ## Mount only the closure of the dev shell's packages, not the full store
     while IFS= read -r storePath; do
       bwrap_args+=(--ro-bind "$storePath" "$storePath")
     done < ${sandboxClosure}/store-paths
