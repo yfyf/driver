@@ -68,6 +68,8 @@ let
     RESOLV=$(mktemp)
     echo "nameserver ${fakeDnsIp}" > "$RESOLV"
 
+    export SHELL=${bashInteractive}/bin/bash
+
     bwrap_args=(
       # Env variables
       --clearenv
@@ -143,7 +145,7 @@ let
     done < ${sandboxClosure}/store-paths
 
     echo "Entering sandbox..."
-    exec ${bubblewrap}/bin/bwrap "''${bwrap_args[@]}" "$SHELL"
+    exec ${bubblewrap}/bin/bwrap "''${bwrap_args[@]}" $SHELL
   '';
 
   sandboxEntry = writeShellScript "sandbox-entry" ''
