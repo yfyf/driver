@@ -175,8 +175,6 @@ let
       # Port forwarding: sandbox->parent
       # forward proxyPort from sandbox to parent
       -T ${toString proxyPort}
-      -T 55567
-      -T 55568
 
       -- ${sandboxInit}
     )
