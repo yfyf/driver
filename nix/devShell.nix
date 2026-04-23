@@ -15,6 +15,8 @@ let
     # Required for building go dependencies
     autoconf
     automake
+    git
+    gnumake
     libtool
     flex
     pkg-config
