@@ -123,6 +123,7 @@ let
     # to avoid accidentally matching prefixes like PATH_FOO when you want PATH.
     passthru_env_regexes=(
       '^PATH$'
+      '^SHELL$'
       '^TERM$'
       '^NIX.*'
       '^PKG_CONFIG_PATH_FOR_TARGET$'
@@ -142,7 +143,7 @@ let
     done < ${sandboxClosure}/store-paths
 
     echo "Entering sandbox..."
-    exec ${bubblewrap}/bin/bwrap "''${bwrap_args[@]}" ${bashInteractive}/bin/bash
+    exec ${bubblewrap}/bin/bwrap "''${bwrap_args[@]}" "$SHELL"
   '';
 
   sandboxEntry = writeShellScript "sandbox-entry" ''
