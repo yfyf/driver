@@ -41,6 +41,7 @@ let
     anthropic.com
     .claude.com
     claude.com
+    .golang.org
   '';
 
   privoxyConf = writeText "privoxy.conf" ''
