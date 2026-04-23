@@ -154,7 +154,7 @@ let
     export PATH="$PWD/node_modules/.bin:$PATH"
 
     echo "Starting privoxy..."
-    pkill -f privoxy
+    pkill -f privoxy || true
     ${privoxy}/bin/privoxy --no-daemon ${privoxyConf} &
     PRIVOXY_PID=$!
     trap "kill $PRIVOXY_PID 2>/dev/null || true" EXIT INT TERM
@@ -182,7 +182,7 @@ let
     )
 
     echo "Entering isolated network ..."
-    exec ${passt}/bin/pasta "''${pasta_args[@]}"
+    ${passt}/bin/pasta -f "''${pasta_args[@]}"
   '';
 in
 mkShell {
