@@ -90,18 +90,21 @@ func (handle *Handle) EnsureSmartCardPolling() {
 	if handle.cancelPolling == nil {
 		ctx, cancel := context.WithCancel(handle.ctx)
 		handle.cancelPolling = cancel
+		emitToken := func(token string) {
+			handle.broker.TryPub(Message{Identified: &token}, Topic)
+		}
 		// Start a polling routine and push any tokens it produces onto the bus
 		go pollSmartCard(
 			ctx,
 			handle.log,
-			func(token string) {
-				handle.broker.TryPub(Message{Identified: &token}, Topic)
-			},
+			emitToken,
 			func(knownReaders []string) {
 				handle.knownReaders = knownReaders
 				handle.broker.TryPub(Message{ReadersChanged: &knownReaders}, Topic)
 			},
 		)
+		// Also re-fetch the current token from pcscd every second and emit it
+		go pollCurrentTokens(ctx, handle.log, emitToken)
 	}
 
 	handle.subscriberCount++

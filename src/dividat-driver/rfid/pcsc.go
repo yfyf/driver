@@ -247,6 +247,76 @@ func waitForCardActivity(haveBeenKilled *bool, lostContext chan bool, log *logru
 	}
 }
 
+// pollCurrentTokens establishes its own PC/SC context and, on a 1s tick,
+// asks pcscd for the UID of any card currently present in any reader,
+// emitting it via onToken. Runs alongside pollSmartCard, which only emits
+// on state transitions; this loop emits unconditionally on every tick.
+func pollCurrentTokens(ctx context.Context, log *logrus.Entry, onToken func(string)) {
+	scardContextBackoff := backoff.NewExponentialBackOff()
+	scardContextBackoff.MaxElapsedTime = 0
+	scardContextBackoff.MaxInterval = 3 * time.Second
+
+	var scard_ctx *scard.Context
+	for {
+		var err error
+		scard_ctx, err = scard.EstablishContext()
+		if err == nil {
+			break
+		}
+		log.WithError(err).Error("Could not create smart card context for token re-read.")
+		select {
+		case <-time.After(scardContextBackoff.NextBackOff()):
+		case <-ctx.Done():
+			return
+		}
+	}
+	defer scard_ctx.Release()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			readers, err := scard_ctx.ListReaders()
+			if err != nil && err != scard.ErrNoReadersAvailable {
+				log.WithError(err).Debug("Re-read: error listing readers.")
+				continue
+			}
+			for _, reader := range readers {
+				states := []scard.ReaderState{makeReaderState(reader)}
+				if err := scard_ctx.GetStatusChange(states, 0); err != nil {
+					continue
+				}
+				if !is(states[0].EventState, scard.StatePresent) {
+					continue
+				}
+				card, err := scard_ctx.Connect(reader, scard.ShareShared, scard.ProtocolAny)
+				if err != nil {
+					log.WithError(err).Debug("Re-read: error connecting to card.")
+					continue
+				}
+				response, err := card.Transmit(uidAPDU)
+				if err != nil {
+					log.WithError(err).Debug("Re-read: failed transmitting UID APDU.")
+					card.Disconnect(scard.LeaveCard)
+					continue
+				}
+				card.Disconnect(scard.LeaveCard)
+
+				uid, err := parseUID(response)
+				if err != nil {
+					log.WithError(err).Debug("Re-read: error parsing RFID token.")
+					continue
+				}
+				onToken(uid)
+			}
+		}
+	}
+}
+
 type ReaderProfile struct {
 	// Reuse last known state when querying for state changes.
 	lastKnownState scard.StateFlag
